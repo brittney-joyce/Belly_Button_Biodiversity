@@ -1,0 +1,44 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Flask Plotlyjs Example</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id="pie"></div>
+    <script>
+
+    // Plot the default route once the page loads
+    var default_url = "/";
+    Plotly.d3.json(default_url, function(error, response) {
+        if (error) return console.warn(error);
+        var data = [response];
+        var layout = { margin: { t: 30, b:100 } }
+        Plotly.plot("pie", data, layout)
+
+
+        // Update the plot with new data
+        function updatePlotly(newdata) {
+            var Bar = document.getElementById('pie');
+            Plotly.restyle(pie, 'x', [newdata.x])
+[            Plotly.restyle(pie, 'y', [newdata.y])
+]        }
+
+        // Get new data whenever the dropdown selection changes
+        function getData(route) {
+            console.log(route);
+            Plotly.d3.json(`/${route}`, function(error, data) {
+                console.log("newdata", data);
+                updatePlotly(data);
+            });
+        }
+    </script>
+
+    <select id="selDataset" onchange="getData(this.value)">
+    //    <option value="emoji_char">Emoji Char</option>
+    //    <option value="emoji_id">Emoji ID</option>
+    //    <option value="emoji_name">Emoji Name</option>
+    </select>
+</body>
