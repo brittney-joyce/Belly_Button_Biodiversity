@@ -25,30 +25,27 @@ app = Flask(__name__)
 from flask_sqlalchemy import SQLAlchemy
 
 # The database URI
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///Belly_Button_BiodiversityHW/belly_button_biodiversity.sqlite"
+engine = create_engine ("sqlite:///Belly_Button_BiodiversityHW/belly_button_biodiversity.sqlite")
 
-db = SQLAlchemy(app)
-
-class Emoji(db.Model):
-    __tablename__ = 'emoji'
-
-    otu_id = db.Column(db.Integer, primary_key=True)
-    lowest_taxonomic_unit_found = db.Column(db.String)
+Base = automap_base()
+Base.prepare(engine, reflect=True)
 
 
-    def __repr__(self):
-        return '<Emoji %r>' % (self.name)
+OTU = Base.classes.otu
+Samples = Base.classes.samples
+Samples_Metadata= Base.classes.samples_metadata
 
-# Create database tables
-@app.before_first_request
-def setup():
-    # Recreate database each time for demo
-    # db.drop_all()
-    db.create_all()
+
+session = Session(engine)
 
 #################################################
 # Flask Routes
 #################################################
+
+# Create database tables
+@app.before_first_request
+def setup():
+    db.create_all()
 
 @app.route("/")
 def home():
@@ -56,63 +53,33 @@ def home():
     return render_template("index.html")
 
 @app.route("/names")
-def emoji_char_data():
+def names():
     """Return a list of sample names in the format"""
 
     # query for the top 10 emoji data
-    results = db.session.query(samples).\
-        order_by(Emoji.score.desc()).\
-        limit(10).all()
+    results = db.session.query(samples).statement
+    df = pd.read_sql_query(stmt, session.bind)
+    df.set_index('otu_id', inplace=True)
 
-    # Select the top 10 query results
-    emoji_char = [result[0] for result in results]
-    scores = [int(result[1]) for result in results]
-
-    # Generate the plot trace
-    plot_trace = {
-        "x": emoji_char,
-        "y": scores,
-        "type": "bar"
-    }
-    return jsonify(plot_trace)
-
+    return jsonify(list(df.columns))
 
 
 @app.route("/otu")
 def otu():
     """Return list of OTU descriptions"""
+    results = session.query(OTU.lowest_taxonomic_unit_found).all()
 
-    # query for the emoji data using pandas
-    query_statement = db.session.query(Emoji).\
-    order_by(Emoji.score.desc()).\
-    limit(10).statement
-    df = pd.read_sql_query(query_statement, db.session.bind)
+otu_list = list(np.ravel(results))
+    return jsonify(otu_list)
 
-    # Format the data for Plotly
-    plot_trace = {
-            "x": df["emoji_id"].values.tolist(),
-            "y": df["score"].values.tolist(),
-            "type": "bar"
-    }
-    return jsonify(plot_trace)
 
-@app.route("/emoji_name")
-def emoji_name_data():
-    """Return emoji score and emoji name"""
+@app.route("/samples_metadata")
+def sample_metadata(sample):
 
-    # query for the top 10 emoji data
-    results = db.session.query(Emoji.name, Emoji.score).\
-        order_by(Emoji.score.desc()).\
-        limit(10).all()
-    df = pd.DataFrame(results, columns=['name', 'score'])
+    sel = [Samples_Metadata.SAMPLEID, Samples_Metadata.ETHNICITY,
+           Samples_Metadata.GENDER, Samples_Metadata.AGE,
+           Samples_Metadata.LOCATION, Samples_Metadata.BBTYPE]
 
-    # Format the data for Plotly
-    plot_trace = {
-            "x": df["name"].values.tolist(),
-            "y": df["score"].values.tolist(),
-            "type": "bar"
-    }
-    return jsonify(plot_trace)
 
 if __name__ == '__main__':
     app.run(debug=True)
