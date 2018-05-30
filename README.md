@@ -1,6 +1,6 @@
 # Belly_Button_Biodiversity
 
-<img src=https://usc.bootcampcontent.com/usc-boot-camp/USCLOS201801DATA2-Class-Repository-DATA/raw/master/02-Homework/15-Interactive-Visualizations-and-Dashboards/Instructions/Images/bacteria_by_filterforgedotcom.jpg">
+<img src="https://usc.bootcampcontent.com/usc-boot-camp/USCLOS201801DATA2-Class-Repository-DATA/raw/master/02-Homework/15-Interactive-Visualizations-and-Dashboards/Instructions/Images/bacteria_by_filterforgedotcom.jpg">
 
 <p>We created an interactive visual dashboard using full stack development. </p>
 
